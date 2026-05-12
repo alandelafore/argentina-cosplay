@@ -37,9 +37,12 @@ npm run dev
 - `src/config/database.ts` — conexiones a PostgreSQL y MongoDB
 - `src/routes` — rutas de API
 - `src/controllers` — controladores base
+- `src/graphql` — definiciones y resolvers GraphQL
 - `src/models/mongo` — esquemas de logs y métricas
+- `frontend` — aplicación React + Vite consumiendo GraphQL
 
 ## Siguientes pasos
 - Implementar búsquedas avanzadas y filtros EAV.
 - Conectar integraciones de pasarelas de pago y envíos.
-- Agregar clientes frontend o GraphQL según sea necesario.
+- Iniciar el frontend con `cd frontend && npm install && npm run dev`.
+- Consumir GraphQL desde `http://localhost:4000/graphql`.
