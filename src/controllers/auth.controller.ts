@@ -54,6 +54,10 @@ export async function login(req: Request, res: Response) {
     return res.status(401).json({ message: "Credenciales inválidas" });
   }
 
+  if (user.isSuspended) {
+    return res.status(403).json({ message: "Cuenta suspendida" });
+  }
+
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     return res.status(401).json({ message: "Credenciales inválidas" });

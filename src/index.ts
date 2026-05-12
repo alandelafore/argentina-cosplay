@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { app } from "./app";
 import { connectDatabases } from "./config/database";
-import { registerQueues } from "./config/queue";
+import { registerQueues, startQueueWorkers } from "./config/queue";
 
 dotenv.config();
 
@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 4000;
 async function bootstrap() {
   await connectDatabases();
   await registerQueues();
+  startQueueWorkers();
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

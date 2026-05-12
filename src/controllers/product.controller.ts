@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/database";
-import { searchLogQueue } from "../config/queue";
+import { analyticsQueue, searchLogQueue } from "../config/queue";
 
 export async function listProducts(req: Request, res: Response) {
-  const { categoryId, minPrice, maxPrice, condition, search, page = 1, pageSize = 20 } = req.query;
+  const { categoryId, minPrice, maxPrice, condition, search, page = 1, pageSize = 20, attributeFilters } = req.query;
   const filters: any = { status: "ACTIVE" };
 
   if (categoryId) {
@@ -18,20 +18,61 @@ export async function listProducts(req: Request, res: Response) {
     if (maxPrice) filters.price.lte = Number(maxPrice);
   }
 
-  const where = search
-    ? {
-        ...filters,
-        OR: [
-          { title: { contains: String(search), mode: "insensitive" } },
-          { description: { contains: String(search), mode: "insensitive" } },
-          { tags: { has: String(search) } },
-        ],
+  const where: any = { ...filters };
+
+  if (search) {
+    where.OR = [
+      { title: { contains: String(search), mode: "insensitive" } },
+      { description: { contains: String(search), mode: "insensitive" } },
+      { tags: { has: String(search) } },
+    ];
+  }
+
+  if (attributeFilters) {
+    try {
+      const parsedFilters = JSON.parse(String(attributeFilters));
+      if (Array.isArray(parsedFilters) && parsedFilters.length) {
+        where.AND = parsedFilters.map((filter: any) => {
+          if (filter.definitionId) {
+            return {
+              attributes: {
+                some: {
+                  attributeDefinitionId: filter.definitionId,
+                  value: filter.value,
+                },
+              },
+            };
+          }
+
+          if (filter.name) {
+            return {
+              attributes: {
+                some: {
+                  attributeDefinition: { name: filter.name },
+                  value: filter.value,
+                },
+              },
+            };
+          }
+
+          return {
+            attributes: { some: { value: filter.value } },
+          };
+        });
       }
-    : filters;
+    } catch (error) {
+      return res.status(400).json({ message: "attributeFilters debe ser un JSON válido" });
+    }
+  }
 
   const products = await prisma.product.findMany({
     where,
-    include: { images: true, seller: { select: { id: true, name: true } } },
+    include: {
+      images: true,
+      seller: { select: { id: true, name: true } },
+      attributes: { include: { attributeDefinition: true } },
+      variants: true,
+    },
     skip: (Number(page) - 1) * Number(pageSize),
     take: Number(pageSize),
     orderBy: { createdAt: "desc" },
@@ -39,9 +80,10 @@ export async function listProducts(req: Request, res: Response) {
 
   await searchLogQueue.add("logSearch", {
     query: search || "",
-    filters: { categoryId, minPrice, maxPrice, condition },
+    filters: { categoryId, minPrice, maxPrice, condition, attributeFilters },
     results: products.length,
     userId: req.user?.id,
+    ip: req.ip,
     timestamp: new Date(),
   });
 
@@ -52,12 +94,25 @@ export async function getProduct(req: Request, res: Response) {
   const { id } = req.params;
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { images: true, variants: true, attributes: { include: { attributeDefinition: true } }, seller: { select: { id: true, name: true } } },
+    include: {
+      images: true,
+      variants: true,
+      attributes: { include: { attributeDefinition: true } },
+      seller: { select: { id: true, name: true } },
+    },
   });
 
   if (!product) {
     return res.status(404).json({ message: "Producto no encontrado" });
   }
+
+  await analyticsQueue.add("productView", {
+    productId: id,
+    userId: req.user?.id,
+    ip: req.ip,
+    userAgent: req.headers["user-agent"] || "",
+    createdAt: new Date(),
+  });
 
   return res.json(product);
 }
