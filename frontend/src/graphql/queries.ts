@@ -12,9 +12,27 @@ export const GET_PRODUCTS = gql`
         images {
           url
         }
+        category {
+          id
+          name
+        }
       }
       page
       pageSize
+    }
+  }
+`;
+
+export const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      id
+      name
+      slug
+      children {
+        id
+        name
+      }
     }
   }
 `;
