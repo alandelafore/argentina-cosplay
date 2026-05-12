@@ -122,6 +122,30 @@ export const resolvers = {
         },
       });
     },
+
+    cart: async (_: unknown, __: unknown, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error("No autorizado");
+      }
+
+      return prisma.cart.findUnique({
+        where: { userId: context.user.id },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                  seller: { select: { id: true, name: true } },
+                },
+              },
+              variant: true,
+            },
+          },
+        },
+      });
+    },
   },
 
   User: {
@@ -260,6 +284,37 @@ export const resolvers = {
         include: {
           items: {
             include: { product: { include: { images: true } }, variant: true },
+          },
+        },
+      });
+    },
+
+    removeCartItem: async (_: unknown, { itemId }: { itemId: string }, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error("No autorizado");
+      }
+
+      const cart = await prisma.cart.findUnique({ where: { userId: context.user.id } });
+      if (!cart) {
+        throw new Error("Carrito no encontrado");
+      }
+
+      await prisma.cartItem.deleteMany({ where: { id: itemId, cartId: cart.id } });
+
+      return prisma.cart.findUnique({
+        where: { userId: context.user.id },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                  seller: { select: { id: true, name: true } },
+                },
+              },
+              variant: true,
+            },
           },
         },
       });

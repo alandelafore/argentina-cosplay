@@ -207,6 +207,7 @@ export const typeDefs = gql`
     categories: [Category!]!
     category(id: String!): Category
     order(id: String!): Order
+    cart: Cart
   }
 
   type Mutation {
@@ -215,6 +216,7 @@ export const typeDefs = gql`
     createProduct(input: CreateProductInput!): Product!
     createCategory(input: CreateCategoryInput!): Category!
     addCartItem(input: AddCartItemInput!): Cart!
+    removeCartItem(itemId: String!): Cart!
     createOrder: Order!
   }
 `;
