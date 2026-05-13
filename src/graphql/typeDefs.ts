@@ -200,6 +200,12 @@ export const typeDefs = gql`
     quantity: Int!
   }
 
+  input UpdateProfileInput {
+    name: String
+    phone: String
+    cuit: String
+  }
+
   type Query {
     me: User
     product(id: String!): Product
@@ -217,6 +223,7 @@ export const typeDefs = gql`
     createCategory(input: CreateCategoryInput!): Category!
     addCartItem(input: AddCartItemInput!): Cart!
     removeCartItem(itemId: String!): Cart!
+    updateProfile(input: UpdateProfileInput!): User!
     createOrder: Order!
   }
 `;

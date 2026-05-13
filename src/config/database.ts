@@ -6,15 +6,21 @@ export const prisma = new PrismaClient();
 export async function connectDatabases() {
   const mongodbUri = process.env.MONGODB_URI;
 
+  await prisma.$connect();
+  console.log("Conectado a PostgreSQL");
+
   if (!mongodbUri) {
-    throw new Error("MONGODB_URI no está definido en el entorno");
+    console.warn("MONGODB_URI no definido; se omite la conexión a MongoDB");
+    return;
   }
 
-  await prisma.$connect();
-  await mongoose.connect(mongodbUri, {
-    dbName: process.env.MONGODB_DB_NAME || "cosplay_analytics",
-    autoIndex: true,
-  });
-
-  console.log("Conectado a PostgreSQL y MongoDB");
+  try {
+    await mongoose.connect(mongodbUri, {
+      dbName: process.env.MONGODB_DB_NAME || "cosplay_analytics",
+      autoIndex: true,
+    });
+    console.log("Conectado a MongoDB");
+  } catch (error) {
+    console.warn("No se pudo conectar a MongoDB; se continúa sin MongoDB:", error);
+  }
 }

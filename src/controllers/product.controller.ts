@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/database";
-import { analyticsQueue, searchLogQueue } from "../config/queue";
+// import { analyticsQueue, searchLogQueue } from "../config/queue";
 
 export async function listProducts(req: Request, res: Response) {
   const { categoryId, minPrice, maxPrice, condition, search, page = 1, pageSize = 20, attributeFilters } = req.query;
@@ -78,14 +78,14 @@ export async function listProducts(req: Request, res: Response) {
     orderBy: { createdAt: "desc" },
   });
 
-  await searchLogQueue.add("logSearch", {
-    query: search || "",
-    filters: { categoryId, minPrice, maxPrice, condition, attributeFilters },
-    results: products.length,
-    userId: req.user?.id,
-    ip: req.ip,
-    timestamp: new Date(),
-  });
+  // await searchLogQueue.add("logSearch", {
+  //   query: search || "",
+  //   filters: { categoryId, minPrice, maxPrice, condition, attributeFilters },
+  //   results: products.length,
+  //   userId: req.user?.id,
+  //   ip: req.ip,
+  //   timestamp: new Date(),
+  // });
 
   return res.json({ data: products, page: Number(page), pageSize: Number(pageSize) });
 }
@@ -106,13 +106,13 @@ export async function getProduct(req: Request, res: Response) {
     return res.status(404).json({ message: "Producto no encontrado" });
   }
 
-  await analyticsQueue.add("productView", {
-    productId: id,
-    userId: req.user?.id,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"] || "",
-    createdAt: new Date(),
-  });
+  // await analyticsQueue.add("productView", {
+  //   productId: id,
+  //   userId: req.user?.id,
+  //   ip: req.ip,
+  //   userAgent: req.headers["user-agent"] || "",
+  //   createdAt: new Date(),
+  // });
 
   return res.json(product);
 }

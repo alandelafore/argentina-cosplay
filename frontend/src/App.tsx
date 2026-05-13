@@ -1,16 +1,21 @@
-import { FormEvent, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@apollo/client";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useApolloClient, useMutation, useQuery } from "@apollo/client";
 import {
   ADD_CART_ITEM,
   CREATE_ORDER,
   GET_CART,
   GET_CATEGORIES,
+  GET_ME,
   GET_PRODUCT,
   GET_PRODUCTS,
+  LOGIN,
+  REGISTER,
   REMOVE_CART_ITEM,
+  UPDATE_PROFILE,
 } from "./graphql/queries";
+import { clearAuthTokens, setAuthTokens } from "./auth";
 
-type PageView = "catalog" | "product" | "cart";
+type PageView = "catalog" | "product" | "cart" | "profile";
 
 export function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -22,6 +27,15 @@ export function App() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileCuit, setProfileCuit] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [registerName, setRegisterName] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerCuit, setRegisterCuit] = useState("");
 
   const { data: categoryData } = useQuery(GET_CATEGORIES);
   const { data, loading, error, refetch } = useQuery(GET_PRODUCTS, {
@@ -37,6 +51,47 @@ export function App() {
       pageSize: 12,
     },
   });
+
+  const { data: meData, loading: meLoading, error: meError, refetch: refetchMe } = useQuery(GET_ME);
+  const apolloClient = useApolloClient();
+  const isAuthenticated = Boolean(meData?.me);
+
+  const [login, { loading: loggingIn }] = useMutation(LOGIN, {
+    onCompleted: (data) => {
+      const { accessToken, refreshToken } = data.login;
+      setAuthTokens(accessToken, refreshToken);
+      setMessage("Has iniciado sesión correctamente");
+      refetchMe();
+      apolloClient.resetStore();
+      setPage("catalog");
+    },
+  });
+
+  const [register, { loading: registering }] = useMutation(REGISTER, {
+    onCompleted: (data) => {
+      const { accessToken, refreshToken } = data.register;
+      setAuthTokens(accessToken, refreshToken);
+      setMessage("Cuenta creada y sesión iniciada");
+      refetchMe();
+      apolloClient.resetStore();
+      setPage("catalog");
+    },
+  });
+
+  const [updateProfile, { loading: updatingProfile }] = useMutation(UPDATE_PROFILE, {
+    onCompleted: () => {
+      setMessage("Perfil actualizado correctamente");
+      refetchMe();
+    },
+  });
+
+  useEffect(() => {
+    if (meData?.me) {
+      setProfileName(meData.me.name || "");
+      setProfilePhone(meData.me.phone || "");
+      setProfileCuit(meData.me.cuit || "");
+    }
+  }, [meData]);
 
   const {
     data: productData,
@@ -54,7 +109,7 @@ export function App() {
     error: cartError,
     refetch: refetchCart,
   } = useQuery(GET_CART, {
-    skip: page !== "cart",
+    skip: page !== "cart" || !isAuthenticated,
     fetchPolicy: "network-only",
   });
 
@@ -122,6 +177,39 @@ export function App() {
     await createOrder();
   };
 
+  const handleLogout = async () => {
+    clearAuthTokens();
+    setMessage("Has cerrado sesión");
+    await apolloClient.clearStore();
+    setPage("catalog");
+  };
+
+  const handleAuthSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (authMode === "login") {
+      await login({
+        variables: {
+          email: authEmail,
+          password: authPassword,
+        },
+      });
+      return;
+    }
+
+    await register({
+      variables: {
+        input: {
+          email: authEmail,
+          password: authPassword,
+          name: registerName,
+          phone: registerPhone || null,
+          cuit: registerCuit || null,
+          roles: ["COMPRADOR"],
+        },
+      },
+    });
+  };
+
   return (
     <div className="app-shell">
       <header className="header">
@@ -132,11 +220,61 @@ export function App() {
         <div className="header-actions">
           <button className={page === "catalog" ? "nav-button active" : "nav-button"} onClick={() => setPage("catalog")}>Catálogo</button>
           <button className={page === "cart" ? "nav-button active" : "nav-button"} onClick={() => setPage("cart")}>Carrito</button>
+          <button className={page === "profile" ? "nav-button active" : "nav-button"} onClick={() => setPage("profile")}>Perfil</button>
         </div>
       </header>
 
       <main className="content">
         {message && <div className="flash-message">{message}</div>}
+
+        {!meData?.me ? (
+          <div className="auth-panel">
+            <div className="auth-header">
+              <h2>{authMode === "login" ? "Iniciar sesión" : "Registrar cuenta"}</h2>
+              <div className="auth-toggle">
+                <button type="button" className={authMode === "login" ? "nav-button active" : "nav-button"} onClick={() => setAuthMode("login")}>Login</button>
+                <button type="button" className={authMode === "register" ? "nav-button active" : "nav-button"} onClick={() => setAuthMode("register")}>Registro</button>
+              </div>
+            </div>
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
+              <label>
+                Email
+                <input value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} type="email" placeholder="Tu email" required />
+              </label>
+              <label>
+                Contraseña
+                <input value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} type="password" placeholder="Tu contraseña" required />
+              </label>
+              {authMode === "register" && (
+                <>
+                  <label>
+                    Nombre
+                    <input value={registerName} onChange={(e) => setRegisterName(e.target.value)} placeholder="Tu nombre" required />
+                  </label>
+                  <label>
+                    Teléfono
+                    <input value={registerPhone} onChange={(e) => setRegisterPhone(e.target.value)} placeholder="Teléfono" />
+                  </label>
+                  <label>
+                    CUIT
+                    <input value={registerCuit} onChange={(e) => setRegisterCuit(e.target.value)} placeholder="CUIT" />
+                  </label>
+                </>
+              )}
+              <button type="submit" className="action-button" disabled={loggingIn || registering}>
+                {authMode === "login" ? (loggingIn ? "Entrando…" : "Iniciar sesión") : registering ? "Registrando…" : "Crear cuenta"}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="user-card">
+            <div>
+              <strong>Bienvenido, {meData.me.name}</strong>
+              <p>{meData.me.email}</p>
+            </div>
+            <button className="remove-button" type="button" onClick={handleLogout}>Cerrar sesión</button>
+          </div>
+        )}
 
         {page === "catalog" && (
           <div className="catalog-layout">
@@ -272,41 +410,92 @@ export function App() {
         {page === "cart" && (
           <div className="cart-page">
             <h2>Carrito</h2>
-            {cartLoading && <p>Cargando carrito...</p>}
-            {cartError && <p>Error al cargar carrito.</p>}
-            {!cartLoading && !cart?.items?.length && <p>El carrito está vacío.</p>}
-
-            {cart?.items?.length > 0 && (
+            {!isAuthenticated && <p>Debes iniciar sesión para ver tu carrito.</p>}
+            {isAuthenticated && (
               <>
-                <div className="cart-grid">
-                  {cart.items.map((item: any) => (
-                    <article className="cart-item" key={item.id}>
-                      <div className="cart-image">
-                        {item.product.images[0] ? <img src={item.product.images[0].url} alt={item.product.title} /> : <div className="placeholder">Sin imagen</div>}
-                      </div>
-                      <div className="cart-info">
-                        <h3>{item.product.title}</h3>
-                        <p>{item.variant?.sku ? `Variante: ${item.variant.sku}` : "Sin variante"}</p>
-                        <p>Cantidad: {item.quantity}</p>
-                        <p>Precio unitario: ${item.unitPrice.toFixed(2)}</p>
-                        <p>Total: ${(item.unitPrice * item.quantity).toFixed(2)}</p>
-                        <button className="remove-button" onClick={() => handleRemoveItem(item.id)} disabled={removingItem}>
-                          {removingItem ? "Eliminando…" : "Eliminar"}
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                {cartLoading && <p>Cargando carrito...</p>}
+                {cartError && <p>Error al cargar carrito.</p>}
+                {!cartLoading && !cart?.items?.length && <p>El carrito está vacío.</p>}
 
-                <div className="cart-summary">
-                  <div>
-                    <h3>Total</h3>
-                    <p>${cartTotal.toFixed(2)}</p>
-                  </div>
-                  <button className="checkout-button" onClick={handleCheckout} disabled={creatingOrder}>
-                    {creatingOrder ? "Procesando orden…" : "Finalizar compra"}
-                  </button>
-                </div>
+                {cart?.items?.length > 0 && (
+                  <>
+                    <div className="cart-grid">
+                      {cart.items.map((item: any) => (
+                        <article className="cart-item" key={item.id}>
+                          <div className="cart-image">
+                            {item.product.images[0] ? <img src={item.product.images[0].url} alt={item.product.title} /> : <div className="placeholder">Sin imagen</div>}
+                          </div>
+                          <div className="cart-info">
+                            <h3>{item.product.title}</h3>
+                            <p>{item.variant?.sku ? `Variante: ${item.variant.sku}` : "Sin variante"}</p>
+                            <p>Cantidad: {item.quantity}</p>
+                            <p>Precio unitario: ${item.unitPrice.toFixed(2)}</p>
+                            <p>Total: ${(item.unitPrice * item.quantity).toFixed(2)}</p>
+                            <button className="remove-button" onClick={() => handleRemoveItem(item.id)} disabled={removingItem}>
+                              {removingItem ? "Eliminando…" : "Eliminar"}
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+
+                    <div className="cart-summary">
+                      <div>
+                        <h3>Total</h3>
+                        <p>${cartTotal.toFixed(2)}</p>
+                      </div>
+                      <button className="checkout-button" onClick={handleCheckout} disabled={creatingOrder}>
+                        {creatingOrder ? "Procesando orden…" : "Finalizar compra"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {page === "profile" && (
+          <div className="profile-page">
+            <h2>Perfil de usuario</h2>
+            {!isAuthenticated && <p>Debes iniciar sesión para ver y actualizar tu perfil.</p>}
+            {isAuthenticated && (
+              <>
+                {meLoading && <p>Cargando perfil...</p>}
+                {meError && <p>Error al cargar perfil.</p>}
+                {meData?.me && (
+                  <form
+                    className="profile-form"
+                    onSubmit={async (event) => {
+                      event.preventDefault();
+                      await updateProfile({
+                        variables: {
+                          input: {
+                            name: profileName || undefined,
+                            phone: profilePhone || undefined,
+                            cuit: profileCuit || undefined,
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    <label>
+                      Nombre
+                      <input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nombre" />
+                    </label>
+                    <label>
+                      Teléfono
+                      <input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="Teléfono" />
+                    </label>
+                    <label>
+                      CUIT
+                      <input value={profileCuit} onChange={(e) => setProfileCuit(e.target.value)} placeholder="CUIT" />
+                    </label>
+                    <button type="submit" className="action-button" disabled={updatingProfile}>
+                      {updatingProfile ? "Guardando…" : "Actualizar perfil"}
+                    </button>
+                  </form>
+                )}
               </>
             )}
           </div>

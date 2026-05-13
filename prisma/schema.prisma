@@ -50,7 +50,8 @@ model User {
   cuit           String?        @unique
   isSuspended    Boolean        @default(false)
   roles          UserRole[]
-  favorites      Favorite[]
+  favorites      Favorite[]     @relation("FavoriteUser")
+  sellerFavorites Favorite[]    @relation("FavoriteSeller")
   products       Product[]      @relation("SellerProducts")
   carts          Cart[]
   orders         Order[]        @relation("BuyerOrders")
@@ -83,14 +84,15 @@ model Category {
 }
 
 model CategoryAttribute {
-  id          String   @id @default(uuid())
-  category    Category @relation(fields: [categoryId], references: [id])
-  categoryId  String
-  name        String
-  type        String
-  required    Boolean  @default(false)
-  options     String[] @default([])
-  createdAt   DateTime @default(now())
+  id                String             @id @default(uuid())
+  category          Category           @relation(fields: [categoryId], references: [id])
+  categoryId        String
+  name              String
+  type              String
+  required          Boolean            @default(false)
+  options           String[]           @default([])
+  productAttributes ProductAttribute[]
+  createdAt         DateTime           @default(now())
 }
 
 model Product {
@@ -113,11 +115,11 @@ model Product {
   reviews         Review[]
   orderItems      OrderItem[]
   favorites       Favorite[]
+  cartItems       CartItem[]
   auditLogs       ProductAudit[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  @@fulltext([title, description, tags])
   @@index([categoryId])
   @@index([sellerId])
   @@index([status])
@@ -135,6 +137,8 @@ model ProductVariant {
   stock       Int      @default(0)
   price       Float?
   metadata    Json?
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
   createdAt   DateTime @default(now())
 }
 
@@ -157,11 +161,11 @@ model ProductImage {
 
 model Favorite {
   id         String   @id @default(uuid())
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation("FavoriteUser", fields: [userId], references: [id])
   userId     String
   product    Product? @relation(fields: [productId], references: [id])
   productId  String?
-  seller     User?    @relation(fields: [sellerId], references: [id])
+  seller     User?    @relation("FavoriteSeller", fields: [sellerId], references: [id])
   sellerId   String?
   createdAt  DateTime @default(now())
 }

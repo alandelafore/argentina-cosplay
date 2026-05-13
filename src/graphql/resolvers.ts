@@ -198,6 +198,23 @@ export const resolvers = {
       };
     },
 
+    updateProfile: async (_: unknown, { input }: any, context: GraphQLContext) => {
+      if (!context.user) {
+        throw new Error("No autorizado");
+      }
+
+      const { name, phone, cuit } = input;
+      return prisma.user.update({
+        where: { id: context.user.id },
+        data: {
+          name: name ?? undefined,
+          phone: phone ?? undefined,
+          cuit: cuit ?? undefined,
+        },
+        include: { roles: true },
+      });
+    },
+
     createProduct: async (_: unknown, { input }: any, context: GraphQLContext) => {
       if (!context.user) {
         throw new Error("No autorizado");

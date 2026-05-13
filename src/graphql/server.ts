@@ -11,6 +11,15 @@ export async function registerGraphQL(app: Express) {
     context: createContext,
   });
 
+  const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
   await server.start();
-  server.applyMiddleware({ app, path: "/graphql" });
+  server.applyMiddleware({
+    app,
+    path: "/graphql",
+    cors: {
+      origin: allowedOrigin,
+      credentials: true,
+    },
+  });
 }

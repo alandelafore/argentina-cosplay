@@ -3,9 +3,16 @@ import cors from "cors";
 import "express-async-errors";
 import routes from "./routes";
 
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
 export const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

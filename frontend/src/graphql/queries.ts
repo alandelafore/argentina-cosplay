@@ -37,6 +37,66 @@ export const GET_CATEGORIES = gql`
   }
 `;
 
+export const GET_ME = gql`
+  query GetMe {
+    me {
+      id
+      email
+      name
+      phone
+      cuit
+      roles
+    }
+  }
+`;
+
+export const LOGIN = gql`
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      accessToken
+      refreshToken
+      user {
+        id
+        email
+        name
+        phone
+        cuit
+        roles
+      }
+    }
+  }
+`;
+
+export const REGISTER = gql`
+  mutation Register($input: RegisterInput!) {
+    register(input: $input) {
+      accessToken
+      refreshToken
+      user {
+        id
+        email
+        name
+        phone
+        cuit
+        roles
+      }
+    }
+  }
+`;
+
+export const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($input: UpdateProfileInput!) {
+    updateProfile(input: $input) {
+      id
+      email
+      name
+      phone
+      cuit
+      roles
+    }
+  }
+`;
+
 export const GET_PRODUCT = gql`
   query GetProduct($id: String!) {
     product(id: $id) {
