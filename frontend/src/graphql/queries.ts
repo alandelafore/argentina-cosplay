@@ -97,6 +97,26 @@ export const UPDATE_PROFILE = gql`
   }
 `;
 
+export const CREATE_PRODUCT = gql`
+  mutation CreateProduct($input: CreateProductInput!) {
+    createProduct(input: $input) {
+      id
+      title
+      description
+      price
+      condition
+      stock
+      images {
+        url
+      }
+      category {
+        id
+        name
+      }
+    }
+  }
+`;
+
 export const GET_PRODUCT = gql`
   query GetProduct($id: String!) {
     product(id: $id) {
