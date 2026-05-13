@@ -301,23 +301,33 @@ export function App() {
 
   return (
     <div className="container py-4">
-      <header className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+      <header className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-5 kawaii-decoration">
         <div>
-          <h1 className="mb-2">Argentina Cosplay Marketplace</h1>
-          <p className="text-muted fs-5">Compra y vende cosplays, pelucas, calzado y props con filtros avanzados.</p>
+          <h1 className="mb-2 display-5 fw-bold" style={{background: 'linear-gradient(135deg, var(--primary-pink), var(--primary-purple))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+            🌸 Argentina Cosplay Marketplace 🌸
+          </h1>
+          <p className="text-muted fs-5 mb-0">Tu mundo kawaii de cosplays, pelucas, calzado y props ✨</p>
         </div>
 
         <div className="btn-group" role="group">
-          <button type="button" className={`btn ${page === "catalog" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("catalog")}>Catálogo</button>
-          <button type="button" className={`btn ${page === "cart" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("cart")}>Carrito</button>
-          <button type="button" className={`btn ${page === "profile" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("profile")}>Perfil</button>
+          <button type="button" className={`btn ${page === "catalog" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("catalog")}>
+            🛍️ Catálogo
+          </button>
+          <button type="button" className={`btn ${page === "cart" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("cart")}>
+            🛒 Carrito
+          </button>
+          <button type="button" className={`btn ${page === "profile" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("profile")}>
+            👤 Perfil
+          </button>
           {isAuthenticated && (
-            <button type="button" className={`btn ${page === "create" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("create")}>Vender</button>
+            <button type="button" className={`btn ${page === "create" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage("create")}>
+              ✨ Vender
+            </button>
           )}
         </div>
       </header>
 
-      {message && <div className="alert alert-success rounded-4">{message}</div>}
+      {message && <div className="alert alert-success alert-kawaii fade-in">{message}</div>}
 
       {!meData?.me ? (
         <div className="card shadow-sm mb-4">
@@ -387,7 +397,9 @@ export function App() {
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 className="card-title mb-0">Buscar catálogo</h5>
-                  <span className="badge bg-primary">Filtros</span>
+                <div className="kawaii-decoration">
+                  <span className="badge badge-kawaii">🔍 Filtros Mágicos</span>
+                </div>
                 </div>
                 <form onSubmit={handleFilterSubmit} className="row g-3">
                   <div className="col-12">
@@ -411,15 +423,15 @@ export function App() {
                     </select>
                   </div>
                   <div className="col-12">
-                    <button type="submit" className="btn btn-primary w-100">Aplicar filtros</button>
+                    <button type="submit" className="btn btn-primary w-100">✨ Aplicar filtros mágicos</button>
                   </div>
                 </form>
               </div>
             </div>
 
             <div className="card shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title">Categorías</h5>
+              <div className="card-body kawaii-decoration">
+                <h5 className="card-title">🎭 Categorías Kawaii</h5>
                 <div className="list-group list-group-flush">
                   <button type="button" className={`list-group-item list-group-item-action ${selectedCategory === null ? "active" : ""}`} onClick={() => setSelectedCategory(null)}>
                     Todas
@@ -464,25 +476,25 @@ export function App() {
             <div className="row g-4">
               {data?.products?.data?.map((product: any) => (
                 <article className="col-12 col-md-6" key={product.id}>
-                  <div className="card h-100 shadow-sm">
+                  <div className="card h-100 shadow-sm kawaii-decoration">
                     <div className="ratio ratio-4x3">
                       {product.images[0] ? (
                         <img src={product.images[0].url} alt={product.title} className="card-img-top object-fit-cover" />
                       ) : (
-                        <div className="placeholder">Sin imagen</div>
+                        <div className="placeholder">✨ Sin imagen ✨</div>
                       )}
                     </div>
                     <div className="card-body d-flex flex-column">
-                      <span className="text-primary text-uppercase small mb-2">{product.category?.name || "Sin categoría"}</span>
+                      <span className="badge badge-kawaii text-uppercase small mb-2">{product.category?.name || "Sin categoría"}</span>
                       <h5 className="card-title">{product.title}</h5>
                       <p className="card-text text-muted">{product.description.slice(0, 120)}...</p>
                       <div className="mt-auto">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                          <span className="fw-semibold">${product.price.toFixed(2)}</span>
+                          <span className="price-highlight">${product.price.toFixed(2)}</span>
                           <span className="badge bg-secondary text-uppercase">{product.condition}</span>
                         </div>
                         <button type="button" className="btn btn-outline-primary w-100" onClick={() => openProduct(product.id)}>
-                          Ver detalles
+                          👀 Ver detalles
                         </button>
                       </div>
                     </div>
@@ -499,8 +511,8 @@ export function App() {
           <div className="card-body">
             <div className="d-flex justify-content-between align-items-center mb-4 flex-column flex-sm-row gap-3">
               <div>
-                <h2 className="h4 mb-1">Crear nuevo producto</h2>
-                <p className="text-muted mb-0">Sube imágenes y completa los datos para publicar tu producto en el marketplace.</p>
+                <h2 className="h4 mb-1">✨ Crear nuevo producto ✨</h2>
+                <p className="text-muted mb-0">Sube imágenes y completa los datos para publicar tu producto en el marketplace kawaii.</p>
               </div>
               <button type="button" className="btn btn-link p-0" onClick={() => setPage("catalog")}>← Volver al catálogo</button>
             </div>
@@ -592,7 +604,7 @@ export function App() {
                 />
               </div>
               <div className="col-12">
-                <label className="form-label">Imágenes</label>
+                <label className="form-label">🖼️ Imágenes Mágicas</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -602,7 +614,7 @@ export function App() {
                   disabled={uploadingImages}
                 />
                 {imageUploadError && <div className="text-danger mt-2">{imageUploadError}</div>}
-                {uploadingImages && <div className="text-muted mt-2">Subiendo imágenes...</div>}
+                {uploadingImages && <div className="text-muted mt-2">⏳ Subiendo imágenes...</div>}
               </div>
               {createImageUrls.length > 0 && (
                 <div className="col-12">
@@ -619,7 +631,7 @@ export function App() {
               )}
               <div className="col-12">
                 <button type="submit" className="btn btn-primary" disabled={creatingProduct || uploadingImages}>
-                  {creatingProduct ? "Creando producto…" : "Crear producto"}
+                  {creatingProduct ? "⏳ Creando producto..." : "🎉 Crear producto"}
                 </button>
               </div>
             </form>
