@@ -12,6 +12,8 @@
     "preview:frontend": "cd frontend && npm run preview",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
+    "db:seed": "ts-node src/seeders/index.ts",
+    "db:seed:fresh": "ts-node src/seeders/index.ts --clear",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
