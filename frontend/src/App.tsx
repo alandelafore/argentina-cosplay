@@ -15,6 +15,7 @@ import {
   UPDATE_PROFILE,
 } from "./graphql/queries";
 import { clearAuthTokens, setAuthTokens } from "./auth";
+import { Header } from "./components/Header";
 
 type PageView = "catalog" | "product" | "cart" | "profile" | "create";
 
@@ -301,44 +302,21 @@ export function App() {
 
   return (
     <div className="container py-4">
-      <header className="site-header mb-5">
-        <div className="top-bar d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3">
-          <div className="brand-group d-flex flex-column gap-2">
-            <button type="button" className="site-logo" onClick={() => setPage("catalog")}>Cosplay Argentina</button>
-            <p className="site-subtitle mb-0">Confección y venta de cosplay, disfraces y vestuario para tu próxima aventura.</p>
-          </div>
-
-          <div className="header-actions d-flex flex-wrap gap-2 justify-content-end">
-            <button type="button" className="btn btn-outline-secondary site-action-btn" onClick={() => setPage("catalog")}>Inicio</button>
-            <button type="button" className="btn btn-outline-secondary site-action-btn" onClick={() => setPage("catalog")}>Productos</button>
-            <button type="button" className="btn btn-outline-secondary site-action-btn" onClick={() => setPage("profile")}>Quiénes Somos</button>
-            <button type="button" className="btn btn-outline-secondary site-action-btn" onClick={() => setPage("catalog")}>Contacto</button>
-          </div>
-        </div>
-
-        <div className="hero-card card shadow-sm mb-4">
-          <div className="card-body row align-items-center gap-4">
-            <div className="col-lg-7">
-              <span className="badge badge-kawaii">Envíos a todo el país</span>
-              <h1 className="hero-title">Tu tienda online de cosplay 100% argentina</h1>
-              <p className="hero-text">Explora disfraces, pelucas, props y accesorios con estilo. Todo para tu próxima convención o sesión de fotos.</p>
-              <div className="hero-actions d-flex flex-wrap gap-2 mt-3">
-                <button type="button" className="btn btn-primary btn-lg" onClick={() => setPage("catalog")}>Ver todos los productos</button>
-                {isAuthenticated ? (
-                  <button type="button" className="btn btn-outline-primary btn-lg" onClick={() => setPage("create")}>Vender ahora</button>
-                ) : (
-                  <button type="button" className="btn btn-outline-primary btn-lg" onClick={() => setPage("catalog")}>Explorar catálogo</button>
-                )}
-              </div>
-            </div>
-            <div className="col-lg-4 hero-image-container">
-              <div className="hero-image">
-                <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80" alt="Cosplay Argentina" className="img-fluid shadow-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        isAuthenticated={isAuthenticated}
+        currentPage={page}
+        onNavigate={(newPage) => {
+          setPage(newPage);
+          if (newPage !== "catalog") {
+            setSelectedCategory(null);
+          }
+        }}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={(categoryId) => {
+          setSelectedCategory(categoryId);
+        }}
+      />
 
       {message && <div className="alert alert-success alert-kawaii fade-in">{message}</div>}
 
